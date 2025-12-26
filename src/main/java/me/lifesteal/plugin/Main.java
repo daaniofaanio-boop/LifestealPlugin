@@ -49,8 +49,9 @@ public class Main extends JavaPlugin implements Listener {
         double currentMax = getPlayerMaxHealth(victim);
 
         if (currentMax <= MIN_HP) {
-            // Gracz ma 1 serce (2HP) i ginie -> dostaje bana
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ban " + victim.getName() + " §cStraciles wszystkie serca!");
+            Bukkit.getScheduler().runTask(this, () -> {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "ban " + victim.getName() + " §cStraciles wszystkie serca!");
+            });
         } else {
             modifyMaxHealth(victim, -2.0);
             victim.getWorld().dropItemNaturally(victim.getLocation(), getHeartItem(1));
@@ -95,15 +96,39 @@ public class Main extends JavaPlugin implements Listener {
         }
     }
 
-    // Komenda /lifesteal give heart (ilość)
     public class LifestealCommand implements CommandExecutor {
         @Override
         public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
             if (!sender.hasPermission("lifesteal.admin")) return true;
-            
             if (args.length >= 3 && args[0].equalsIgnoreCase("give") && args[1].equalsIgnoreCase("heart")) {
                 Player target = Bukkit.getPlayer(args[2]);
-                int amount = args.length == 4 ? Integer.parseInt(args[3]) : 1;
-                
+                int amount = (args.length == 4) ? Integer.parseInt(args[3]) : 1;
                 if (target != null) {
                     target.getInventory().addItem(getHeartItem(amount));
+                    sender.sendMessage("§aDano " + amount + " serc graczowi " + target.getName());
+                }
+                return true;
+            }
+            sender.sendMessage("§cUzycie: /lifesteal give heart (gracz) [ilosc]");
+            return true;
+        }
+    }
+
+    public class WyplacCommand implements CommandExecutor {
+        @Override
+        public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+            if (!(sender instanceof Player)) return true;
+            Player p = (Player) sender;
+            int toWyplac = (args.length > 0) ? Integer.parseInt(args[0]) : 1;
+            double currentMax = getPlayerMaxHealth(p);
+            if (currentMax > (toWyplac * 2.0)) {
+                modifyMaxHealth(p, -(toWyplac * 2.0));
+                p.getInventory().addItem(getHeartItem(toWyplac));
+                p.sendMessage("§aWyplacono " + toWyplac + " serc!");
+            } else {
+                p.sendMessage("§cMasz za malo serc!");
+            }
+            return true;
+        }
+    }
+}
