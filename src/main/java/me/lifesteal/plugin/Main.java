@@ -17,44 +17,79 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
-
 import java.util.Arrays;
 
 public class Main extends JavaPlugin implements Listener {
-
-    // Limit 30 serc (1 serce = 2 punkty zdrowia, więc 60.0)
     private final double MAX_HEALTH_LIMIT = 60.0;
 
     @Override
     public void onEnable() {
         getServer().getPluginManager().registerEvents(this, this);
-        getLogger().info("LifeSteal Plugin aktywowany!");
     }
 
-    // --- TWORZENIE PRZEDMIOTU SERCA ---
     public ItemStack getHeartItem() {
         ItemStack heart = new ItemStack(Material.NETHER_STAR);
         ItemMeta meta = heart.getItemMeta();
-        
         if (meta != null) {
             meta.setDisplayName("§c§lSerce Lifesteal");
-            meta.setLore(Arrays.asList(
-                "§7Kliknij PPM, aby zyskac dodatkowe serce!",
-                "§8Przedmiot niezniszczalny (Nigdy nie znika)"
-            ));
-            
-            // Tekstura (CustomModelData dla resourcepacka)
-            meta.setCustomModelData(1001); 
-            
-            // Odporność na ogień i lawę (wbudowana w 1.21.x)
-            meta.setFireResistant(true); 
-            
+            meta.setLore(Arrays.asList("§7Kliknij PPM, aby zyskac serce!", "§8Przedmiot niezniszczalny"));
+            meta.setCustomModelData(1001);
+            meta.setFireResistant(true);
             heart.setItemMeta(meta);
         }
         return heart;
     }
 
-    // --- LOGIKA ŚMIERCI: SERCE ZAWSZE WYPADA ---
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onDeath(PlayerDeathEvent event) {
-        Player victim =
+        Player victim = event.getEntity();
+        modifyMaxHealth(victim, -2.0);
+        victim.getWorld().dropItemNaturally(victim.getLocation(), getHeartItem());
+        Player killer = victim.getKiller();
+        if (killer != null) {
+            modifyMaxHealth(killer, 2.0);
+        }
+    }
+
+    @EventHandler
+    public void onHeartSpawn(ItemSpawnEvent event) {
+        if (isHeart(event.getEntity().getItemStack())) {
+            event.getEntity().setTicksLived(-32768);
+            event.getEntity().setInvulnerable(true);
+        }
+    }
+
+    @EventHandler
+    public void onHeartDamage(EntityDamageEvent event) {
+        if (event.getEntity() instanceof Item item && isHeart(item.getItemStack())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onInteract(PlayerInteractEvent event) {
+        if (isHeart(event.getItem()) && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
+            Player player = event.getPlayer();
+            AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
+            if (attr != null && attr.getBaseValue() < MAX_HEALTH_LIMIT) {
+                event.getItem().setAmount(event.getItem().getAmount() - 1);
+                modifyMaxHealth(player, 2.0);
+                player.playEffect(player.getLocation(), org.bukkit.EntityEffect.TOTEM_RESURRECT);
+                player.playSound(player.getLocation(), Sound.ITEM_TOTEM_USE, 1.0f, 1.0f);
+            }
+            event.setCancelled(true);
+        }
+    }
+
+    private boolean isHeart(ItemStack item) {
+        return item != null && item.getType() == Material.NETHER_STAR && item.hasItemMeta() && item.getItemMeta().hasCustomModelData();
+    }
+
+    private void modifyMaxHealth(Player p, double amount) {
+        AttributeInstance attr = p.getAttribute(Attribute.MAX_HEALTH);
+        if (attr != null) {
+            double newMax = Math.min(MAX_HEALTH_LIMIT, Math.max(2.0, attr.getBaseValue() + amount));
+            attr.setBaseValue(newMax);
+        }
+    }
+}
