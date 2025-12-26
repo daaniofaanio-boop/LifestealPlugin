@@ -1,0 +1,5 @@
+name: LifeSteal
+version: 1.0
+main: me.lifesteal.plugin.Main
+api-version: '1.21'
+author: TwojNick
