@@ -20,7 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Arrays;
 
 public class Main extends JavaPlugin implements Listener {
-    private final double MAX_HEALTH_LIMIT = 60.0;
+    private final double MAX_HEALTH = 60.0;
 
     @Override
     public void onEnable() {
@@ -61,20 +61,23 @@ public class Main extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onHeartDamage(EntityDamageEvent event) {
-        if (event.getEntity() instanceof Item item && isHeart(item.getItemStack())) {
-            event.setCancelled(true);
+        if (event.getEntity() instanceof Item) {
+            Item itemEntity = (Item) event.getEntity();
+            if (isHeart(itemEntity.getItemStack())) {
+                event.setCancelled(true);
+            }
         }
     }
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        if (isHeart(event.getItem()) && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
+        if (event.getItem() != null && isHeart(event.getItem()) && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
             Player player = event.getPlayer();
             AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
-            if (attr != null && attr.getBaseValue() < MAX_HEALTH_LIMIT) {
+            if (attr != null && attr.getBaseValue() < MAX_HEALTH) {
                 event.getItem().setAmount(event.getItem().getAmount() - 1);
                 modifyMaxHealth(player, 2.0);
-                player.playEffect(player.getLocation(), org.bukkit.EntityEffect.TOTEM_RESURRECT);
+                player.playEffect(org.bukkit.EntityEffect.TOTEM_RESURRECT);
                 player.playSound(player.getLocation(), Sound.ITEM_TOTEM_USE, 1.0f, 1.0f);
             }
             event.setCancelled(true);
@@ -88,7 +91,7 @@ public class Main extends JavaPlugin implements Listener {
     private void modifyMaxHealth(Player p, double amount) {
         AttributeInstance attr = p.getAttribute(Attribute.MAX_HEALTH);
         if (attr != null) {
-            double newMax = Math.min(MAX_HEALTH_LIMIT, Math.max(2.0, attr.getBaseValue() + amount));
+            double newMax = Math.min(MAX_HEALTH, Math.max(2.0, attr.getBaseValue() + amount));
             attr.setBaseValue(newMax);
         }
     }
