@@ -20,7 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Arrays;
 
 public class Main extends JavaPlugin implements Listener {
-    private final double MAX_HEALTH = 60.0;
+    private final double LIMIT_HP = 60.0;
 
     @Override
     public void onEnable() {
@@ -74,7 +74,7 @@ public class Main extends JavaPlugin implements Listener {
         if (event.getItem() != null && isHeart(event.getItem()) && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
             Player player = event.getPlayer();
             AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
-            if (attr != null && attr.getBaseValue() < MAX_HEALTH) {
+            if (attr != null && attr.getBaseValue() < LIMIT_HP) {
                 event.getItem().setAmount(event.getItem().getAmount() - 1);
                 modifyMaxHealth(player, 2.0);
                 player.playEffect(org.bukkit.EntityEffect.TOTEM_RESURRECT);
@@ -91,8 +91,9 @@ public class Main extends JavaPlugin implements Listener {
     private void modifyMaxHealth(Player p, double amount) {
         AttributeInstance attr = p.getAttribute(Attribute.MAX_HEALTH);
         if (attr != null) {
-            double newMax = Math.min(MAX_HEALTH, Math.max(2.0, attr.getBaseValue() + amount));
-            attr.setBaseValue(newMax);
+            double current = attr.getBaseValue();
+            double next = Math.min(LIMIT_HP, Math.max(2.0, current + amount));
+            attr.setBaseValue(next);
         }
     }
 }
