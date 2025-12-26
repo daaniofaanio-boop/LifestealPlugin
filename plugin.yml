@@ -1,5 +1,11 @@
-name: LifeSteal
+name: LifeStealPlugin
 version: 1.0
 main: me.lifesteal.plugin.Main
-api-version: '1.21'
-author: TwojNick
+api-version: 1.21
+commands:
+  lifesteal:
+    description: Admin command
+    permission: lifesteal.admin
+  wyplacserce:
+    description: Wyplacanie serc
+    aliases: [wyplacserca]
