@@ -73,7 +73,8 @@ public class Main extends JavaPlugin implements Listener {
     public void onInteract(PlayerInteractEvent event) {
         if (event.getItem() != null && isHeart(event.getItem()) && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
             Player player = event.getPlayer();
-            AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
+            // Poprawione na GENERIC_MAX_HEALTH dla 1.21.1
+            AttributeInstance attr = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
             if (attr != null && attr.getBaseValue() < LIMIT_HP) {
                 event.getItem().setAmount(event.getItem().getAmount() - 1);
                 modifyMaxHealth(player, 2.0);
@@ -89,7 +90,8 @@ public class Main extends JavaPlugin implements Listener {
     }
 
     private void modifyMaxHealth(Player p, double amount) {
-        AttributeInstance attr = p.getAttribute(Attribute.MAX_HEALTH);
+        // Poprawione na GENERIC_MAX_HEALTH dla 1.21.1
+        AttributeInstance attr = p.getAttribute(Attribute.GENERIC_MAX_HEALTH);
         if (attr != null) {
             double current = attr.getBaseValue();
             double next = Math.min(LIMIT_HP, Math.max(2.0, current + amount));
